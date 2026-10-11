@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz Informatique — Prof. Lotfi Habibi</title>
+<style>
+  :root{
+    --navy:#2b2f7e;
+    --navy-dark:#1d2059;
+    --gold:#e0b84b;
+    --bg:#f2f3fb;
+    --card:#ffffff;
+    --green:#3bb273;
+    --red:#e15554;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Tahoma, Arial, sans-serif;
+    background:linear-gradient(160deg,#eef0fb 0%,#dfe3f7 100%);
+    color:#20224a;
+    min-height:100vh;
+  }
+  header{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    background:var(--navy);
+    color:#fff;
+    padding:14px 20px;
+    box-shadow:0 3px 10px rgba(0,0,0,.15);
+  }
+  header img{
+    height:54px;
+    width:54px;
+    border-radius:50%;
+    background:#fff;
+    padding:4px;
+  }
+  header .titles h1{
+    margin:0;
+    font-size:1.2rem;
+  }
+  header .titles p{
+    margin:2px 0 0;
+    font-size:.85rem;
+    color:var(--gold);
+  }
+  main{
+    max-width:1000px;
+    margin:0 auto;
+    padding:20px;
+  }
+  .panel{
+    background:var(--card);
+    border-radius:14px;
+    padding:18px 20px;
+    box-shadow:0 4px 16px rgba(30,30,90,.08);
+    margin-bottom:20px;
+  }
+  h2{margin-top:0;color:var(--navy-dark);}
+  .teams{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+  }
+  .team-chip{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:var(--bg);
+    border:2px solid var(--navy);
+    border-radius:30px;
+    padding:6px 10px 6px 14px;
+    font-weight:600;
+    flex-wrap:wrap;
+  }
+  .team-chip .score{color:var(--navy-dark);min-width:52px;}
+  .team-chip .adj-input{
+    width:52px;
+    padding:4px 6px;
+    border-radius:6px;
+    border:1px solid #c9cce5;
+    font-size:.85rem;
+    text-align:center;
+  }
+  .team-chip .adj-btn{
+    border:none;
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:1rem;
+    font-weight:800;
+    line-height:1;
+    color:#fff;
+  }
+  .team-chip .adj-btn[data-action="plus"]{background:var(--green);}
+  .team-chip .adj-btn[data-action="minus"]{background:var(--red);}
+  .team-chip .del-btn{
+    border:none;
+    background:transparent;
+    cursor:pointer;
+    font-size:1rem;
+    color:#999;
+  }
+  #addTeamForm{display:flex;gap:8px;margin-top:12px;}
+  #addTeamForm input{
+    padding:8px 12px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    flex:1;
+    min-width:120px;
+  }
+  #addTeamForm button, .primary-btn{
+    background:var(--navy);
+    color:#fff;
+    border:none;
+    padding:8px 16px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+  }
+  #addTeamForm button:hover, .primary-btn:hover{background:var(--navy-dark);}
+
+  .board{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:16px;
+  }
+  @media (max-width:800px){
+    .board{grid-template-columns:1fr 1fr;}
+  }
+  @media (max-width:600px){
+    .board{grid-template-columns:1fr;}
+  }
+  .category{
+    background:var(--card);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 4px 16px rgba(30,30,90,.08);
+  }
+  .cat-header{
+    background:var(--navy);
+    color:#fff;
+    padding:12px 14px;
+    font-weight:700;
+    text-align:center;
+    font-size:1rem;
+  }
+  .cell{
+    background:var(--bg);
+    border:none;
+    border-bottom:1px solid #dfe2f5;
+    width:100%;
+    padding:16px;
+    font-size:1.1rem;
+    font-weight:700;
+    color:var(--navy-dark);
+    cursor:pointer;
+    transition:.15s;
+    text-align:center;
+  }
+  .cell:hover{background:#dfe3f7;}
+  .cell.used{
+    background:#e9e9ef;
+    color:#b3b3c0;
+    cursor:not-allowed;
+    pointer-events:none;
+  }
+
+  .overlay{
+    position:fixed;inset:0;
+    background:rgba(20,22,60,.55);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    z-index:50;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:#fff;
+    border-radius:16px;
+    max-width:520px;
+    width:100%;
+    padding:24px;
+    box-shadow:0 10px 40px rgba(0,0,0,.3);
+  }
+  .modal .points{
+    color:var(--gold);
+    font-weight:800;
+    font-size:.9rem;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+  }
+  .modal h3{margin:6px 0 14px;color:var(--navy-dark);}
+  .options{display:grid;gap:8px;margin-bottom:14px;}
+  .option{
+    padding:10px 14px;
+    border:2px solid #dcdfef;
+    border-radius:10px;
+    cursor:pointer;
+    background:#fafbff;
+  }
+  .option:hover{border-color:var(--navy);}
+  .option.correct{background:#e7f7ef;border-color:var(--green);color:#1c7a49;font-weight:700;}
+  .option.wrong{background:#fceaea;border-color:var(--red);color:#a52f2f;}
+  .award-row{
+    margin-top:16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+  }
+  .award-row select{
+    padding:8px;
+    border-radius:8px;
+    border:1px solid #ccc;
+  }
+  .close-btn{
+    margin-top:14px;
+    background:#eee;
+    border:none;
+    padding:8px 16px;
+    border-radius:8px;
+    cursor:pointer;
+    float:right;
+  }
+  footer{
+    text-align:center;
+    color:#8a8db0;
+    font-size:.8rem;
+    padding:20px;
+  }
+
+  /* Tabs */
+  .tabs{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .tab-btn{
+    background:var(--bg);
+    border:2px solid var(--navy);
+    color:var(--navy-dark);
+    padding:10px 18px;
+    border-radius:30px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .tab-btn.active{
+    background:var(--navy);
+    color:#fff;
+  }
+
+  /* Jeu de mémoire */
+  .memory-controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    align-items:center;
+    margin-bottom:16px;
+    font-size:.9rem;
+  }
+  .memory-controls select, .memory-controls input{
+    padding:6px 8px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    margin-left:6px;
+  }
+  .memory-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:12px;
+  }
+  @media (max-width:600px){
+    .memory-grid{grid-template-columns:repeat(2, 1fr);}
+  }
+  .memory-card{
+    aspect-ratio:1/1;
+    perspective:800px;
+    cursor:pointer;
+  }
+  .memory-card-inner{
+    position:relative;
+    width:100%;
+    height:100%;
+    transition:transform .4s;
+    transform-style:preserve-3d;
+  }
+  .memory-card.flipped .memory-card-inner,
+  .memory-card.matched .memory-card-inner{
+    transform:rotateY(180deg);
+  }
+  .memory-face{
+    position:absolute;
+    inset:0;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:8px;
+    font-weight:700;
+    font-size:.85rem;
+    backface-visibility:hidden;
+  }
+  .memory-face.front{
+    background:var(--navy);
+    color:var(--gold);
+    font-size:1.6rem;
+  }
+  .memory-face.back{
+    background:#fff;
+    border:2px solid var(--navy);
+    color:var(--navy-dark);
+    transform:rotateY(180deg);
+  }
+  .memory-card.matched .memory-face.back{
+    background:#e7f7ef;
+    border-color:var(--green);
+    color:#1c7a49;
+  }
+
+  /* Classement final */
+  .rank-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:var(--bg);
+    border-radius:12px;
+    padding:12px 16px;
+    margin-bottom:10px;
+    font-weight:700;
+  }
+  .rank-row .medal{font-size:1.6rem;width:36px;text-align:center;}
+  .rank-row .rname{flex:1;color:var(--navy-dark);}
+  .rank-row .rscore{color:var(--gold);font-size:1.1rem;}
+  .rank-row.first{
+    background:linear-gradient(90deg,#fff7e0,var(--bg));
+    border:2px solid var(--gold);
+  }
+  #confettiCanvas{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:80;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="data:image/jpeg;base64,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" alt="Logo Les Écoles Riad">
+  <div class="titles">
+    <h1>Quiz Informatique — Notions de base</h1>
+    <p>Professeur Lotfi Habibi · Les Écoles Riad</p>
+  </div>
+</header>
+
+<main>
+  <div class="panel">
+    <h2>Équipes</h2>
+    <div class="teams" id="teamsWrap"></div>
+    <div id="addTeamForm">
+      <input type="text" id="newTeamName" placeholder="Nom du groupe (ex: Groupe A)">
+      <button type="button" id="addTeamBtn">Ajouter</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="tabs">
+      <button type="button" class="tab-btn active" data-tab="quiz">🎯 Plateau Quiz</button>
+      <button type="button" class="tab-btn" data-tab="memory">🧠 Jeu de mémoire</button>
+      <button type="button" class="tab-btn" data-tab="ranking">🏆 Classement final</button>
+    </div>
+  </div>
+
+  <div class="panel tab-panel" id="tab-quiz">
+    <h2>Choisissez une rubrique et une question</h2>
+    <div class="board" id="board"></div>
+  </div>
+
+  <div class="panel tab-panel" id="tab-memory" style="display:none;">
+    <h2>Jeu de mémoire — Retrouvez les paires</h2>
+    <div class="memory-controls">
+      <label>Équipe active :
+        <select id="memoryTeamSelect"></select>
+      </label>
+      <label>Points par paire :
+        <input type="number" id="memoryPoints" value="50" min="0" style="width:70px;">
+      </label>
+      <button type="button" class="primary-btn" id="memoryResetBtn">🔀 Mélanger / Recommencer</button>
+    </div>
+    <div class="memory-grid" id="memoryGrid"></div>
+  </div>
+
+  <div class="panel tab-panel" id="tab-ranking" style="display:none;">
+    <h2>🏆 Classement final</h2>
+    <div id="rankingList"></div>
+    <button type="button" class="primary-btn" id="celebrateBtn" style="margin-top:16px;">🎉 Célébrer le vainqueur</button>
+  </div>
+</main>
+
+<footer>Activité interactive créée pour Les Écoles Riad — Prof. Lotfi Habibi</footer>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="points" id="modalPoints"></div>
+    <h3 id="modalQuestion"></h3>
+    <div class="options" id="modalOptions"></div>
+    <div class="award-row" id="awardRow" style="display:none;">
+      <span>Attribuer les points à :</span>
+      <select id="awardTeamSelect"></select>
+      <button class="primary-btn" id="awardBtn" type="button">Valider</button>
+    </div>
+    <button class="close-btn" id="closeBtn" type="button">Fermer</button>
+  </div>
+</div>
+
+<canvas id="confettiCanvas"></canvas>
+
+<script>
+// ---------- Données du quiz ----------
+const categories = [
+  {
+    name: "Matériel informatique",
+    questions: [
+      { points:100, q:"Comment appelle-t-on le « cerveau » de l'ordinateur qui exécute les instructions ?",
+        options:["Le processeur (CPU)","Le clavier","L'imprimante","Le disque dur"], answer:0 },
+      { points:200, q:"Lequel de ces éléments est un périphérique d'ENTRÉE ?",
+        options:["L'écran","La souris","L'imprimante","Le haut-parleur"], answer:1 },
+      { points:300, q:"Où sont stockées les données de façon permanente dans un ordinateur ?",
+        options:["Dans la RAM","Dans le processeur","Dans le disque dur","Dans le cache"], answer:2 },
+      { points:400, q:"Quelle unité mesure la capacité de stockage d'une mémoire ?",
+        options:["Le hertz (Hz)","L'octet (byte)","Le volt (V)","Le watt (W)"], answer:1 },
+      { points:500, q:"Quelle est la différence principale entre la RAM et le disque dur ?",
+        options:["La RAM stocke les données de façon permanente, le disque dur non","La RAM est une mémoire temporaire, le disque dur stocke de façon permanente","Ce sont exactement la même chose","Le disque dur sert uniquement à refroidir l'ordinateur"], answer:1 },
+      { points:600, q:"Lequel de ces éléments est un périphérique de SORTIE ?",
+        options:["Le clavier","La souris","L'écran","Le scanner"], answer:2 },
+      { points:700, q:"Que représente 1 Gigaoctet (Go) ?",
+        options:["1000 kilooctets","Environ 1000 mégaoctets","1000 téraoctets","1 octet"], answer:1 },
+      { points:800, q:"Quel composant permet de refroidir le processeur pour éviter la surchauffe ?",
+        options:["Le ventilateur (système de refroidissement)","La carte réseau","La souris","Le haut-parleur"], answer:0 },
+    ]
+  },
+  {
+    name: "Logiciels & système",
+    questions: [
+      { points:100, q:"Qu'est-ce qu'un logiciel ?",
+        options:["Une pièce physique de l'ordinateur","Un programme qui donne des instructions à l'ordinateur","Un câble de connexion","Un type d'écran"], answer:1 },
+      { points:200, q:"Lequel de ces noms désigne un système d'exploitation ?",
+        options:["Microsoft Word","Windows","Google Chrome","Excel"], answer:1 },
+      { points:300, q:"Quel logiciel permet de naviguer sur Internet ?",
+        options:["Un tableur","Un navigateur web","Un antivirus","Un traitement de texte"], answer:1 },
+      { points:400, q:"Quel est le rôle principal d'un antivirus ?",
+        options:["Accélérer l'ordinateur","Protéger contre les logiciels malveillants","Imprimer des documents","Gérer les fichiers audio"], answer:1 },
+      { points:500, q:"Quelle extension de fichier correspond généralement à un programme exécutable sous Windows ?",
+        options:[".jpg",".exe",".mp3",".docx"], answer:1 },
+      { points:600, q:"Quel logiciel est spécialement conçu pour créer et modifier des textes ?",
+        options:["Un traitement de texte (ex : Word)","Un tableur","Un lecteur vidéo","Un système d'exploitation"], answer:0 },
+      { points:700, q:"Pourquoi est-il important de mettre à jour régulièrement ses logiciels ?",
+        options:["Pour changer la couleur de l'écran","Pour corriger des failles et améliorer la sécurité","Pour supprimer tous les fichiers","Ce n'est jamais nécessaire"], answer:1 },
+      { points:800, q:"Lequel de ces systèmes est un système d'exploitation pour smartphone ?",
+        options:["Android","Excel","Photoshop","Firefox"], answer:0 },
+    ]
+  },
+  {
+    name: "Réseau informatique",
+    questions: [
+      { points:100, q:"Qu'est-ce qu'un réseau informatique ?",
+        options:["Un logiciel de dessin","Un ensemble d'ordinateurs reliés entre eux pour échanger des données","Un type d'imprimante","Une pièce de l'unité centrale"], answer:1 },
+      { points:200, q:"Que signifie le sigle « Wi-Fi » ?",
+        options:["Une connexion filaire obligatoire","Une technologie de connexion sans fil","Un type de virus informatique","Un logiciel de messagerie"], answer:1 },
+      { points:300, q:"Quel appareil permet de relier plusieurs ordinateurs à Internet dans une maison ou une école ?",
+        options:["Le clavier","La souris","Le routeur (box internet)","L'écran"], answer:2 },
+      { points:400, q:"Que signifie « IP » dans l'expression « adresse IP » ?",
+        options:["Internet Protocol","Image Personnelle","Interface Programmable","Installation Portable"], answer:0 },
+      { points:500, q:"Quelle est la différence entre Internet et Intranet ?",
+        options:["Ils désignent exactement la même chose","Internet est un réseau mondial ouvert, l'Intranet est un réseau privé interne","L'Intranet est plus rapide qu'Internet obligatoirement","Internet n'utilise pas de câbles"], answer:1 },
+      { points:600, q:"Quel outil permet d'envoyer et recevoir des messages électroniques ?",
+        options:["Un tableur","Une messagerie électronique (e-mail)","Un antivirus","Une imprimante"], answer:1 },
+      { points:700, q:"Quel type de câble est couramment utilisé pour relier un ordinateur à un réseau filaire ?",
+        options:["Câble Ethernet","Câble d'alimentation","Câble audio","Câble VGA"], answer:0 },
+      { points:800, q:"Pourquoi faut-il protéger son réseau Wi-Fi avec un mot de passe fort ?",
+        options:["Pour décorer le nom du réseau","Pour empêcher les accès non autorisés et protéger les données","Ce n'est pas utile","Pour ralentir volontairement la connexion"], answer:1 },
+    ]
+  },
+  {
+    name: "Internet & Web",
+    questions: [
+      { points:100, q:"Qu'est-ce qu'un navigateur web ?",
+        options:["Un logiciel pour consulter des sites internet","Un appareil pour imprimer","Un type de clavier","Un antivirus"], answer:0 },
+      { points:200, q:"À quoi sert un moteur de recherche comme Google ?",
+        options:["À écouter de la musique","À rechercher des informations sur internet","À formater le disque dur","À envoyer des SMS"], answer:1 },
+      { points:300, q:"Que signifie le sigle « URL » ?",
+        options:["L'adresse d'une page web","Un type de virus","Un format d'image","Une unité de mémoire"], answer:0 },
+      { points:400, q:"Qu'est-ce qu'un site web ?",
+        options:["Un ensemble de pages accessibles sur internet autour d'un même thème","Un câble réseau","Une imprimante connectée","Un type de souris"], answer:0 },
+      { points:500, q:"Que signifie « télécharger » un fichier ?",
+        options:["L'effacer définitivement","Le copier depuis internet vers son ordinateur","L'imprimer sur papier","Le renommer"], answer:1 },
+      { points:600, q:"Qu'est-ce que le « cloud » (informatique en nuage) ?",
+        options:["Un type d'imprimante","Un espace de stockage et de services accessibles en ligne","Un virus informatique","Un raccourci clavier"], answer:1 },
+      { points:700, q:"Quelle est la différence entre un navigateur et un moteur de recherche ?",
+        options:["Ce sont deux noms pour la même chose","Le navigateur affiche les pages web, le moteur de recherche aide à trouver des sites","Le moteur de recherche sert uniquement à jouer","Le navigateur ne fonctionne pas sans imprimante"], answer:1 },
+      { points:800, q:"Que signifient les lettres « www » au début d'une adresse internet ?",
+        options:["World Wide Web","Web Word Windows","Wireless Web World","World Web Work"], answer:0 },
+    ]
+  },
+  {
+    name: "Sécurité informatique",
+    questions: [
+      { points:100, q:"Qu'est-ce qu'un mot de passe fort ?",
+        options:["Le prénom de l'utilisateur","Une suite courte de chiffres comme 1234","Un mélange de lettres, chiffres et symboles difficile à deviner","Le même mot de passe partout"], answer:2 },
+      { points:200, q:"Qu'est-ce qu'un virus informatique ?",
+        options:["Un programme malveillant qui peut endommager un ordinateur","Un composant matériel","Un type d'imprimante","Un logiciel de dessin"], answer:0 },
+      { points:300, q:"Qu'est-ce que le « phishing » (hameçonnage) ?",
+        options:["Une technique pour accélérer l'ordinateur","Une tentative de tromper quelqu'un pour voler ses informations personnelles","Un jeu vidéo","Un type de câble réseau"], answer:1 },
+      { points:400, q:"Pourquoi est-il important de faire des sauvegardes (backup) de ses fichiers ?",
+        options:["Pour ralentir l'ordinateur","Pour ne pas perdre ses données en cas de panne ou de vol","Ce n'est pas utile","Pour changer la couleur des dossiers"], answer:1 },
+      { points:500, q:"Qu'est-ce qu'un pare-feu (firewall) ?",
+        options:["Un système qui protège un réseau contre les accès non autorisés","Un logiciel de montage vidéo","Un type de clavier","Un câble d'alimentation"], answer:0 },
+      { points:600, q:"Que faut-il faire en recevant un e-mail suspect avec une pièce jointe inconnue ?",
+        options:["L'ouvrir immédiatement","Le transférer à tous ses contacts","Ne pas l'ouvrir et le signaler ou le supprimer","Répondre avec ses informations personnelles"], answer:2 },
+      { points:700, q:"Qu'est-ce que l'authentification à deux facteurs ?",
+        options:["Se connecter deux fois avec le même mot de passe","Une double vérification pour sécuriser l'accès à un compte","Créer deux comptes différents","Un type de virus"], answer:1 },
+      { points:800, q:"Qu'est-ce qu'un logiciel espion (spyware) ?",
+        options:["Un logiciel qui collecte secrètement des informations sur l'utilisateur","Un logiciel de traitement de texte","Un antivirus officiel","Un jeu éducatif"], answer:0 },
+    ]
+  },
+  {
+    name: "Bureautique",
+    questions: [
+      { points:100, q:"Quel type de logiciel sert principalement à rédiger des textes (ex : Word) ?",
+        options:["Un traitement de texte","Un tableur","Un logiciel de présentation","Un antivirus"], answer:0 },
+      { points:200, q:"Quel type de logiciel sert à faire des calculs et des tableaux (ex : Excel) ?",
+        options:["Un traitement de texte","Un tableur","Un navigateur web","Un lecteur vidéo"], answer:1 },
+      { points:300, q:"Quel type de logiciel sert à créer des présentations (ex : PowerPoint) ?",
+        options:["Un tableur","Un logiciel de présentation","Un antivirus","Un système d'exploitation"], answer:1 },
+      { points:400, q:"Qu'est-ce qu'un fichier PDF ?",
+        options:["Un format de document conçu pour être lu de la même façon sur tous les appareils","Un type de virus","Un format audio","Un langage de programmation"], answer:0 },
+      { points:500, q:"Dans un tableur, comment appelle-t-on une case où l'on entre une donnée ?",
+        options:["Une cellule","Une diapositive","Une balise","Un onglet uniquement"], answer:0 },
+      { points:600, q:"Quel raccourci clavier permet de COPIER un texte sélectionné ?",
+        options:["Ctrl + V","Ctrl + C","Ctrl + Z","Ctrl + P"], answer:1 },
+      { points:700, q:"Quel raccourci clavier permet de COLLER un texte copié ?",
+        options:["Ctrl + C","Ctrl + X","Ctrl + V","Ctrl + S"], answer:2 },
+      { points:800, q:"Comment appelle-t-on un document composé de plusieurs pages de calculs dans un tableur ?",
+        options:["Une feuille de calcul","Une diapositive","Un paragraphe","Un navigateur"], answer:0 },
+    ]
+  },
+  {
+    name: "Culture numérique",
+    questions: [
+      { points:100, q:"Quels sont les deux seuls chiffres utilisés dans le langage binaire de l'ordinateur ?",
+        options:["1 et 2","0 et 1","0 et 9","2 et 4"], answer:1 },
+      { points:200, q:"Qu'est-ce qu'un « bit » en informatique ?",
+        options:["La plus petite unité d'information (0 ou 1)","Un type de logiciel","Un câble réseau","Un virus"], answer:0 },
+      { points:300, q:"Combien de bits composent un octet (byte) ?",
+        options:["4 bits","8 bits","16 bits","2 bits"], answer:1 },
+      { points:400, q:"Quel est le nom du réseau considéré comme l'ancêtre d'Internet ?",
+        options:["ARPANET","Facebook","Windows","Bluetooth"], answer:0 },
+      { points:500, q:"Quelle entreprise a créé le système d'exploitation Windows ?",
+        options:["Apple","Microsoft","Google","Samsung"], answer:1 },
+      { points:600, q:"Quelle entreprise a créé l'iPhone et le système iOS ?",
+        options:["Microsoft","Apple","Amazon","Intel"], answer:1 },
+      { points:700, q:"Que veut dire l'abréviation « PC » ?",
+        options:["Personal Computer (ordinateur personnel)","Programme Central","Puissance Complète","Protocole Connecté"], answer:0 },
+      { points:800, q:"En une phrase simple, qu'est-ce que l'intelligence artificielle (IA) ?",
+        options:["Un type d'imprimante rapide","Un ensemble de techniques permettant à une machine de simuler certaines capacités humaines","Un câble réseau spécial","Un ancien système d'exploitation"], answer:1 },
+    ]
+  }
+];
+
+// ---------- État ----------
+let teams = [];
+let usedCells = new Set();
+
+// ---------- Rendu des équipes ----------
+function renderTeams(){
+  const wrap = document.getElementById('teamsWrap');
+  wrap.innerHTML = '';
+  teams.forEach((t, i)=>{
+    const chip = document.createElement('div');
+    chip.className = 'team-chip';
+    chip.innerHTML = `<span>${t.name}</span><span class="score">${t.score} pts</span>
+      <button type="button" class="adj-btn" data-action="minus" data-i="${i}" title="Retirer des points">−</button>
+      <input type="number" class="adj-input" min="0" value="10">
+      <button type="button" class="adj-btn" data-action="plus" data-i="${i}" title="Ajouter un bonus">+</button>
+      <button type="button" class="del-btn" data-action="delete" data-i="${i}" title="Supprimer">✕</button>`;
+    wrap.appendChild(chip);
+  });
+  refreshMemoryTeamSelect();
+}
+
+// Délégation d'événement : fonctionne même après chaque re-rendu de la liste
+document.getElementById('teamsWrap').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-i]');
+  if(!btn) return;
+  const i = parseInt(btn.dataset.i, 10);
+  const action = btn.dataset.action;
+
+  if(action === 'delete'){
+    teams.splice(i,1);
+    renderTeams();
+    return;
+  }
+
+  if(action === 'plus' || action === 'minus'){
+    const chip = btn.closest('.team-chip');
+    const input = chip.querySelector('.adj-input');
+    let amount = parseInt(input.value, 10);
+    if(isNaN(amount) || amount < 0) amount = 0;
+    if(teams[i]){
+      teams[i].score += (action === 'plus' ? amount : -amount);
+      renderTeams();
+    }
+  }
+});
+
+function addTeam(){
+  const input = document.getElementById('newTeamName');
+  const name = input.value.trim();
+  if(name){
+    teams.push({name, score:0});
+    input.value='';
+    renderTeams();
+    input.focus();
+  }
+}
+document.getElementById('addTeamBtn').addEventListener('click', addTeam);
+document.getElementById('newTeamName').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    addTeam();
+  }
+});
+
+// démarrer avec deux groupes par défaut
+teams.push({name:'Groupe 1', score:0});
+teams.push({name:'Groupe 2', score:0});
+renderTeams();
+
+// ---------- Rendu du plateau ----------
+const board = document.getElementById('board');
+categories.forEach((cat, ci)=>{
+  const col = document.createElement('div');
+  col.className = 'category';
+  col.innerHTML = `<div class="cat-header">${cat.name}</div>`;
+  cat.questions.forEach((qs, qi)=>{
+    const btn = document.createElement('button');
+    btn.className = 'cell';
+    btn.textContent = qs.points + ' pts';
+    btn.dataset.id = ci+'-'+qi;
+    btn.addEventListener('click', ()=> openQuestion(ci, qi));
+    col.appendChild(btn);
+  });
+  board.appendChild(col);
+});
+
+// ---------- Question modal ----------
+const overlay = document.getElementById('overlay');
+const modalPoints = document.getElementById('modalPoints');
+const modalQuestion = document.getElementById('modalQuestion');
+const modalOptions = document.getElementById('modalOptions');
+const awardRow = document.getElementById('awardRow');
+const awardTeamSelect = document.getElementById('awardTeamSelect');
+
+let currentCellId = null;
+let currentPoints = 0;
+
+function openQuestion(ci, qi){
+  const id = ci+'-'+qi;
+  if(usedCells.has(id)) return;
+  const qs = categories[ci].questions[qi];
+  currentCellId = id;
+  currentPoints = qs.points;
+
+  // La question est retirée du jeu dès qu'elle est ouverte (gagnée ou perdue,
+  // elle ne doit plus pouvoir être choisie par un autre groupe).
+  usedCells.add(id);
+  const cellBtn = document.querySelector(`.cell[data-id="${id}"]`);
+  if(cellBtn){ cellBtn.classList.add('used'); cellBtn.textContent = '✓'; cellBtn.disabled = true; }
+
+  modalPoints.textContent = categories[ci].name + ' · ' + qs.points + ' points';
+  modalQuestion.textContent = qs.q;
+  modalOptions.innerHTML = '';
+  awardRow.style.display = 'none';
+
+  qs.options.forEach((opt, oi)=>{
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.textContent = opt;
+    div.addEventListener('click', ()=>{
+      document.querySelectorAll('.option').forEach((o,j)=>{
+        if(j===qs.answer) o.classList.add('correct');
+        else if(o===div && oi!==qs.answer) o.classList.add('wrong');
+      });
+      if(teams.length){
+        awardTeamSelect.innerHTML = teams.map((t,ti)=>`<option value="${ti}">${t.name}</option>`).join('');
+        awardRow.style.display = 'flex';
+      }
+    });
+    modalOptions.appendChild(div);
+  });
+
+  overlay.classList.add('show');
+}
+
+document.getElementById('awardBtn').addEventListener('click', ()=>{
+  const ti = parseInt(awardTeamSelect.value, 10);
+  if(!isNaN(ti) && teams[ti]){
+    teams[ti].score += currentPoints;
+    renderTeams();
+  }
+  closeModal();
+});
+
+document.getElementById('closeBtn').addEventListener('click', closeModal);
+function closeModal(){ overlay.classList.remove('show'); }
+
+// ---------- Onglets (Quiz / Jeu de mémoire / Classement) ----------
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const target = btn.dataset.tab;
+    document.getElementById('tab-quiz').style.display = (target === 'quiz') ? '' : 'none';
+    document.getElementById('tab-memory').style.display = (target === 'memory') ? '' : 'none';
+    document.getElementById('tab-ranking').style.display = (target === 'ranking') ? '' : 'none';
+    if(target === 'ranking') renderRanking();
+  });
+});
+
+// ---------- Jeu de mémoire ----------
+const memoryPairs = [
+  { term:"Souris", match:"Périphérique d'entrée" },
+  { term:"Imprimante", match:"Périphérique de sortie" },
+  { term:"RAM", match:"Mémoire vive (temporaire)" },
+  { term:"Disque dur", match:"Stockage permanent" },
+  { term:"Windows", match:"Système d'exploitation" },
+  { term:"Wi-Fi", match:"Connexion sans fil" },
+  { term:"URL", match:"Adresse d'une page web" },
+  { term:"Antivirus", match:"Protection contre les virus" },
+];
+
+let memoryCards = [];
+let flippedCards = [];
+let lockBoard = false;
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildMemoryDeck(){
+  let deck = [];
+  memoryPairs.forEach((p, pi)=>{
+    deck.push({ pairId: pi, text: p.term });
+    deck.push({ pairId: pi, text: p.match });
+  });
+  deck = shuffle(deck);
+  return deck.map((c, idx)=>({ ...c, idx, matched:false, flipped:false }));
+}
+
+function renderMemoryGrid(){
+  const grid = document.getElementById('memoryGrid');
+  grid.innerHTML = '';
+  memoryCards.forEach(card=>{
+    const cardEl = document.createElement('div');
+    cardEl.className = 'memory-card';
+    cardEl.dataset.idx = card.idx;
+    cardEl.innerHTML = `
+      <div class="memory-card-inner">
+        <div class="memory-face front">?</div>
+        <div class="memory-face back">${card.text}</div>
+      </div>`;
+    cardEl.addEventListener('click', ()=> flipMemoryCard(card.idx));
+    grid.appendChild(cardEl);
+  });
+}
+
+function resetMemoryGame(){
+  memoryCards = buildMemoryDeck();
+  flippedCards = [];
+  lockBoard = false;
+  renderMemoryGrid();
+}
+
+function flipMemoryCard(idx){
+  if(lockBoard) return;
+  const card = memoryCards[idx];
+  if(card.matched || card.flipped) return;
+  if(flippedCards.length >= 2) return;
+
+  card.flipped = true;
+  updateMemoryCardEl(card);
+  flippedCards.push(card);
+
+  if(flippedCards.length === 2){
+    lockBoard = true;
+    const [a, b] = flippedCards;
+    if(a.pairId === b.pairId){
+      a.matched = true; b.matched = true;
+      updateMemoryCardEl(a); updateMemoryCardEl(b);
+      awardMemoryPoints();
+      flippedCards = [];
+      lockBoard = false;
+    } else {
+      setTimeout(()=>{
+        a.flipped = false; b.flipped = false;
+        updateMemoryCardEl(a); updateMemoryCardEl(b);
+        flippedCards = [];
+        lockBoard = false;
+      }, 900);
+    }
+  }
+}
+
+function updateMemoryCardEl(card){
+  const el = document.querySelector(`.memory-card[data-idx="${card.idx}"]`);
+  if(!el) return;
+  el.classList.toggle('flipped', card.flipped && !card.matched);
+  el.classList.toggle('matched', card.matched);
+}
+
+function awardMemoryPoints(){
+  const select = document.getElementById('memoryTeamSelect');
+  const ti = parseInt(select.value, 10);
+  let pts = parseInt(document.getElementById('memoryPoints').value, 10);
+  if(isNaN(pts) || pts < 0) pts = 0;
+  if(!isNaN(ti) && teams[ti]){
+    teams[ti].score += pts;
+    renderTeams();
+    select.value = ti; // garder la sélection après le re-rendu du select
+  }
+}
+
+function refreshMemoryTeamSelect(){
+  const select = document.getElementById('memoryTeamSelect');
+  if(!select) return;
+  const prev = select.value;
+  select.innerHTML = teams.map((t,ti)=>`<option value="${ti}">${t.name}</option>`).join('');
+  if(prev !== '' && teams[parseInt(prev,10)]) select.value = prev;
+}
+
+document.getElementById('memoryResetBtn').addEventListener('click', resetMemoryGame);
+
+resetMemoryGame();
+
+// ---------- Classement final ----------
+function renderRanking(){
+  const list = document.getElementById('rankingList');
+  if(teams.length === 0){
+    list.innerHTML = '<p>Ajoutez des groupes pour voir le classement.</p>';
+    return;
+  }
+  const sorted = teams.slice().sort((a,b)=> b.score - a.score);
+  const medals = ['🥇','🥈','🥉'];
+  list.innerHTML = sorted.map((t,i)=>{
+    const medal = medals[i] || (i+1)+'.';
+    return `<div class="rank-row ${i===0 ? 'first' : ''}">
+      <span class="medal">${medal}</span>
+      <span class="rname">${t.name}</span>
+      <span class="rscore">${t.score} pts</span>
+    </div>`;
+  }).join('');
+}
+
+// ---------- Confetti (célébration du vainqueur) ----------
+const confettiCanvas = document.getElementById('confettiCanvas');
+const ctx = confettiCanvas.getContext('2d');
+function resizeConfettiCanvas(){
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeConfettiCanvas);
+resizeConfettiCanvas();
+
+function launchConfetti(){
+  const colors = ['#e0b84b','#2b2f7e','#3bb273','#e15554','#f2a65a'];
+  const pieces = [];
+  const count = 140;
+  for(let i=0; i<count; i++){
+    pieces.push({
+      x: Math.random() * confettiCanvas.width,
+      y: -20 - Math.random() * confettiCanvas.height * 0.5,
+      w: 6 + Math.random() * 6,
+      h: 8 + Math.random() * 8,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      speed: 2 + Math.random() * 3,
+      drift: (Math.random() - 0.5) * 2,
+      rotation: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 10,
+    });
+  }
+  const duration = 3200;
+  const start = performance.now();
+
+  function frame(now){
+    const elapsed = now - start;
+    ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    pieces.forEach(p=>{
+      p.y += p.speed;
+      p.x += p.drift;
+      p.rotation += p.rotSpeed;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+    if(elapsed < duration){
+      requestAnimationFrame(frame);
+    } else {
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+document.getElementById('celebrateBtn').addEventListener('click', ()=>{
+  renderRanking();
+  launchConfetti();
+});
+</script>
+</body>
+</html>
